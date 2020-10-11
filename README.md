@@ -12,4 +12,4 @@ This repository contains all of the files necessary to replicate the poll-tracki
 
 ## Usage and Attribution
 
-I am happy for others to use my code for their own purposes, but ask that they do so *with attribution*. That is, you may reproduce, reuse, and change the code here as you see fit, but must state in each case that you based your analysis on my work.
+I am happy for others to use my code for their own purposes, but ask that they do so *with attribution*. That is, you may reproduce, reuse, and change the code here as you see fit, but must state in each case that you based your analysis on my work. For more information, review the [license][https://github.com/jackobailey/poll_tracker/blob/main/LICENSE].
