@@ -1,4 +1,4 @@
-# Poll Tracker
+# Jack Bailey's Poll Tracker
 
 <!-- <center><img src="https://raw.githubusercontent.com/jackobailey/econ_half_life/master/_output/real_decay_plot.png"></center> -->
 
