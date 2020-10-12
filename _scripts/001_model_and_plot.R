@@ -11,6 +11,7 @@
 # Load packages
 
 library(tidyverse)
+library(patchwork)
 library(tidybayes)
 library(lubridate)
 library(htmltab)
@@ -151,33 +152,331 @@ m1 <-
   brm(formula = bf(outcome ~ 1 + gb + s(time, k = 10) + (1 | pollster)),
       family = dirichlet(link = "logit", refcat = "oth"),
       prior =
-        prior(normal(-1, .5), class = "Intercept", dpar = "mucon") +
+        prior(normal(0, 1.5), class = "Intercept", dpar = "mucon") +
         prior(normal(0, 0.5), class = "b", dpar = "mucon") +
         prior(exponential(2), class = "sd", dpar = "mucon") +
         prior(exponential(2), class = "sds", dpar = "mucon") +
-        prior(normal(-1, .5), class = "Intercept", dpar = "mugrn") +
+        prior(normal(0, 1.5), class = "Intercept", dpar = "mugrn") +
         prior(normal(0, 0.5), class = "b", dpar = "mugrn") +
         prior(exponential(2), class = "sd", dpar = "mugrn") +
         prior(exponential(2), class = "sds", dpar = "mugrn") +
-        prior(normal(-1, .5), class = "Intercept", dpar = "mulab") +
+        prior(normal(0, 1.5), class = "Intercept", dpar = "mulab") +
         prior(normal(0, 0.5), class = "b", dpar = "mulab") +
         prior(exponential(2), class = "sd", dpar = "mulab") +
         prior(exponential(2), class = "sds", dpar = "mulab") +
-        prior(normal(-1, .5), class = "Intercept", dpar = "mulib") +
+        prior(normal(0, 1.5), class = "Intercept", dpar = "mulib") +
         prior(normal(0, 0.5), class = "b", dpar = "mulib") +
         prior(exponential(2), class = "sd", dpar = "mulib") +
         prior(exponential(2), class = "sds", dpar = "mulib") +
-        prior(normal(-1, .5), class = "Intercept", dpar = "musnp") +
+        prior(normal(0, 1.5), class = "Intercept", dpar = "musnp") +
         prior(normal(0, 0.5), class = "b", dpar = "musnp") +
         prior(exponential(2), class = "sd", dpar = "musnp") +
-        prior(exponential(2), class = "sds", dpar = "musnp"),
+        prior(exponential(2), class = "sds", dpar = "musnp") +
+        prior(gamma(1, 0.01), class = "phi"),
       data = dta,
-      backend = "cmdstanr",
       iter = 2e3,
-      chains = 2,
-      cores = 2,
-      threads = threading(2),
+      chains = 4,
+      cores = 4,
       refresh = 5,
-      file = here("_output", paste0("model", "-", as.numeric(Sys.Date())))
+      control =
+        list(
+          adapt_delta = .95,
+          max_treedepth = 15
+        ),
+      file = here("_output", paste0("model", "-", Sys.Date()))
   )
+
+
+
+# 4. Plot voting intention over time --------------------------------------
+
+# Convert today's date to numeric
+
+today <- interval("2019-12-12", Sys.Date())/years(1)
+
+
+# Create empty data set the same length as the real data
+
+pred_dta <-
+  tibble(
+    time = seq(0, today, length.out = nrow(dta)),
+    date = as.Date(time*365, origin = "2019-12-12"),
+    gb = "GB"
+  )
+
+
+# Compute predicted probabilities
+
+pred_dta <-
+  add_fitted_draws(
+    model = m1,
+    newdata = pred_dta,
+    re_formula = NA
+  ) %>%
+  group_by(date, .category) %>%
+  summarise(
+    est = median(.value),
+    lower = quantile(.value, probs = .05),
+    upper = quantile(.value, probs = .95),
+    .groups = "drop"
+  ) %>%
+  ungroup() %>%
+  rename(party = .category)
+
+
+# Format data so that the party variable takes the full party names
+
+pred_dta <-
+  pred_dta %>%
+  mutate(
+    party =
+      party %>%
+      factor(
+        levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+        labels =
+          c(
+            "Conservative",
+            "Labour",
+            "Lib Dems",
+            "SNP",
+            "Green",
+            "Other"
+          )
+      )
+  )
+
+
+# Get final predictions for labels
+
+pred_end <-
+  pred_dta %>%
+  filter(date == max(date)) %>%
+  mutate(
+    label = scales::percent(est, accuracy = 1)
+  )
+
+
+# Convert raw data to long-format
+
+point_dta <-
+  dta[names(dta) %in% c("date", "con", "lab", "lib", "snp", "grn")] %>%
+  pivot_longer(
+    cols = -date,
+    names_to = "party",
+    values_to = "est"
+  ) %>%
+  mutate(
+    party =
+      party %>%
+      factor(
+        levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+        labels =
+          c(
+            "Conservative",
+            "Labour",
+            "Lib Dems",
+            "SNP",
+            "Green",
+            "Other"
+          )
+      )
+  )
+
+
+# Plot
+
+poll_plot <-
+  ggplot() +
+  geom_point(data =
+               point_dta %>%
+               filter(party != "Other"),
+             aes(x = date,
+                 y = est,
+                 colour = party,
+                 fill = party),
+             alpha = .3,
+             size = 1) +
+  geom_ribbon(data =
+                pred_dta %>%
+                filter(party != "Other"),
+              aes(x = date,
+                  y = est,
+                  ymin = lower,
+                  ymax = upper,
+                  colour = party,
+                  fill = party),
+              alpha = .3,
+              colour = NA) +
+  geom_line(data =
+              pred_dta %>%
+              filter(party != "Other"),
+            aes(x = date,
+                y = est,
+                colour = party),
+            size = 1) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_x_date(date_breaks = "1 month",
+               date_labels = "%b") +
+  coord_cartesian(xlim = c(min(dta$date), max(dta$date)),
+                  ylim = c(0, .6)) +
+  scale_fill_manual(values = c("#0087DC",
+                               "#DC241f",
+                               "#FAA61A",
+                               "#E8DD67",
+                               "#6AB023")) +
+  scale_color_manual(values = c("#0087DC",
+                                "#DC241f",
+                                "#FAA61A",
+                                "#E8DD67",
+                                "#6AB023")) +
+  labs(title = paste("UK Poll of Polls"),
+       subtitle = format(Sys.Date(), "%d %b %Y"),
+       caption = "",
+       y = "",
+       x = "") +
+  theme_bailey() +
+  theme(legend.position = "none")
+
+
+
+# 5. Plot predicted vote intention ----------------------------------------
+
+# Get predicted probabilities now and order by size
+
+vi_pred <-
+  add_fitted_draws(
+    model = m1,
+    newdata =
+      tibble(time = today,
+             gb = "GB"),
+    re_formula = NA
+  ) %>%
+  group_by(.category) %>%
+  summarise(
+    est = median(.value),
+    lower = quantile(.value, probs = .05),
+    upper = quantile(.value, probs = .95),
+    .groups = "drop"
+  ) %>%
+  ungroup() %>%
+  rename(party = .category) %>%
+  arrange(desc(est)) %>%
+  mutate(
+    party =
+      party %>%
+      factor(
+        levels =
+          c("con",
+            "lab",
+            "lib",
+            "snp",
+            "grn",
+            "oth"),
+        labels =
+          c("Con",
+            "Lab",
+            "LD",
+            "SNP",
+            "Grn",
+            "Oth")
+      ),
+    col =
+      case_when(
+        party == "Con" ~ "#0087DC",
+        party == "Lab" ~ "#DC241f",
+        party == "LD" ~ "#FAA61A",
+        party == "SNP" ~ "#E8DD67",
+        party == "Grn" ~ "#6AB023"
+      )
+  ) %>%
+  mutate(
+    label = scales::percent(est, accuracy = 1)
+  )
+
+
+# Order parties by predicted vote share
+
+vi_pred <-
+  vi_pred %>%
+  mutate(
+    party =
+      party %>%
+      factor(levels = party)
+  )
+
+
+# Plot
+
+vi_plot <-
+  vi_pred %>%
+  filter(party != "Oth") %>%
+  ggplot(aes(x = party,
+             y = est,
+             ymin = lower,
+             ymax = upper,
+             colour = party,
+             label = label)) +
+  geom_interval(size = 1,
+                alpha = .4) +
+  geom_point(size = 2) +
+  geom_text(color = "black",
+            nudge_x = .3,
+            family = "Cabin",
+            size = 2.5) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_color_manual(values = vi_pred$col[vi_pred$party != "Oth"]) +
+  coord_cartesian(ylim = c(0, .6)) +
+  labs(title = paste("UK Poll of Polls"),
+       subtitle = format(Sys.Date(), "%d %b %Y"),
+       caption = "@PoliSciJack",
+       y = "",
+       x = "") +
+  theme_bailey() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(colour = "white"),
+    plot.subtitle = element_text(colour = "white"))
+
+
+
+# 6. Render plot graphic --------------------------------------------------
+
+# Display plots
+
+poll_plot
+vi_plot
+
+
+# Save plot to disk
+
+png(filename = here("_output", "polls.png"),
+    res = 72*8,
+    width = 600*8,
+    height = 335*8)
+
+poll_plot + vi_plot
+
+dev.off()
+
+
+# Save text summary to disk
+
+sink(here("_output", "tweet.txt"))
+cat(
+  paste("UK Poll of Polls,", format(Sys.Date(), "%d %b %Y")),
+  paste0(
+    "\n\n",
+    vi_pred$party[1], ": ", vi_pred$label[1], " (", scales::percent(vi_pred$lower[1]), "-", scales::percent(vi_pred$upper[1]), ")\n",
+    vi_pred$party[2], ": ", vi_pred$label[2], " (", scales::percent(vi_pred$lower[2]), "-", scales::percent(vi_pred$upper[2]), ")\n",
+    vi_pred$party[3], ": ", vi_pred$label[3], " (", scales::percent(vi_pred$lower[3]), "-", scales::percent(vi_pred$upper[3]), ")\n",
+    vi_pred$party[4], ": ", vi_pred$label[4], " (", scales::percent(vi_pred$lower[4]), "-", scales::percent(vi_pred$upper[4]), ")\n",
+    vi_pred$party[5], ": ", vi_pred$label[5], " (", scales::percent(vi_pred$lower[5]), "-", scales::percent(vi_pred$upper[5]), ")"
+  )
+)
+sink()
+
+
+
+# 7. Thanks for replicating! ----------------------------------------------
+
 
