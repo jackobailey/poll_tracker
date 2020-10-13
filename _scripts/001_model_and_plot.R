@@ -174,6 +174,7 @@ m1 <-
         prior(exponential(2), class = "sds", dpar = "musnp") +
         prior(gamma(1, 0.01), class = "phi"),
       data = dta,
+      seed = 666,
       iter = 2e3,
       chains = 4,
       cores = 4,
