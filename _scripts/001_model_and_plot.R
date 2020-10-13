@@ -459,6 +459,11 @@ poll_plot + vi_plot
 dev.off()
 
 
+# Remove "Other"
+
+vi_pred <- vi_pred %>% filter(party != "Oth")
+
+
 # Save text summary to disk
 
 sink(here("_output", "tweet.txt"))
