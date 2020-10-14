@@ -83,7 +83,7 @@ dta <-
   mutate(
     date =
       date %>%
-      str_remove(".*–") %>%
+      str_remove(".*(–|-)") %>%
       paste(., "2020") %>%
       dmy()
   )
