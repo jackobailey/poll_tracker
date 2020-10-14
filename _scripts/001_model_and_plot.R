@@ -483,6 +483,14 @@ sink()
 
 
 
-# 7. Thanks for replicating! ----------------------------------------------
+# 7. Replication details --------------------------------------------------
 
+# Save session information
+
+save_info(here("_output", paste0("session-info-", Sys.Date(), ".txt")))
+
+
+# One more thing...
+
+thanks()
 
