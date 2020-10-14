@@ -1,4 +1,4 @@
-# Jack Bailey's Poll Tracker
+# UK Voting Intention Poll Tracker
 
 <center><img src="https://raw.githubusercontent.com/jackobailey/poll_tracker/main/_output/polls.png"></center>
 
