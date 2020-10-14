@@ -35,6 +35,6 @@ loaded via a namespace (and not attached):
  [79] rstantools_2.1.1     htmlwidgets_1.5.2    tidyselect_1.1.0     processx_3.4.4       plyr_1.8.6           magrittr_1.5        
  [85] R6_2.4.1             generics_0.0.2       DBI_1.1.0            mgcv_1.8-33          pillar_1.4.6         haven_2.3.1         
  [91] withr_2.3.0          xts_0.12.1           abind_1.4-5          modelr_0.1.8         crayon_1.3.4         arrayhelpers_1.1-0  
- [97] grid_4.0.2           readxl_1.3.1         blob_1.2.1           callr_3.5.0          threejs_0.3.3        reprex_0.3.0        
-[103] digest_0.6.25        xtable_1.8-4         httpuv_1.5.4         RcppParallel_5.0.2   stats4_4.0.2         munsell_0.5.0       
-[109] shinyjs_2.0.0       
+ [97] utf8_1.1.4           grid_4.0.2           readxl_1.3.1         blob_1.2.1           callr_3.5.0          threejs_0.3.3       
+[103] reprex_0.3.0         digest_0.6.25        xtable_1.8-4         httpuv_1.5.4         RcppParallel_5.0.2   stats4_4.0.2        
+[109] munsell_0.5.0        shinyjs_2.0.0       
