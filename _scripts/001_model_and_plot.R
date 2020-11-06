@@ -52,9 +52,9 @@ dta <-
     gb = Area,
     con = Con,
     lab = Lab,
-    lib = `Lib Dem`,
-    snp = SNP,
-    grn = Green
+    lib = `Lib Dem`
+    # snp = SNP,
+    # grn = Green
   ) %>%
   tibble()
 
@@ -121,25 +121,39 @@ dta <-
 # Now, we need to convert all of the party figures so that they are scaled as
 # proportions rather than percentages.
 
-dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn")] <-
-  dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn")] %>%
+# dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn")] <-
+#   dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn")] %>%
+#   mutate_all(function(x) as.numeric(str_remove(x, "%"))/100)
+
+dta[names(dta) %in% c("con", "lab", "lib")] <-
+  dta[names(dta) %in% c("con", "lab", "lib")] %>%
   mutate_all(function(x) as.numeric(str_remove(x, "%"))/100)
 
 
 # We also need to create a generic "Other" category that accounts for any other
 # parties in Great Britain that voters might choose to support.
 
+# dta <-
+#   dta %>%
+#   mutate(oth = 1 - (con + lab + lib + snp + grn))
+
 dta <-
   dta %>%
-  mutate(oth = 1 - (con + lab + lib + snp + grn))
+  mutate(oth = 1 - (con + lab + lib))
 
 
 # Finally, we'll create a column of simplexes that include each poll's figures.
 
+# dta <-
+#   dta %>%
+#   mutate(
+#     outcome = as.matrix(dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn", "oth")])
+#   )
+
 dta <-
   dta %>%
   mutate(
-    outcome = as.matrix(dta[names(dta) %in% c("con", "lab", "lib", "snp", "grn", "oth")])
+    outcome = as.matrix(dta[names(dta) %in% c("con", "lab", "lib", "oth")])
   )
 
 
@@ -147,6 +161,45 @@ dta <-
 # 3. Fit model ------------------------------------------------------------
 
 # Now that we have our data, we can fit our model.
+
+# m1 <-
+#   brm(formula = bf(outcome ~ 1 + gb + s(time, k = 10) + (1 | pollster)),
+#       family = dirichlet(link = "logit", refcat = "oth"),
+#       prior =
+#         prior(normal(0, 1.5), class = "Intercept", dpar = "mucon") +
+#         prior(normal(0, 0.5), class = "b", dpar = "mucon") +
+#         prior(exponential(2), class = "sd", dpar = "mucon") +
+#         prior(exponential(2), class = "sds", dpar = "mucon") +
+#         prior(normal(0, 1.5), class = "Intercept", dpar = "mugrn") +
+#         prior(normal(0, 0.5), class = "b", dpar = "mugrn") +
+#         prior(exponential(2), class = "sd", dpar = "mugrn") +
+#         prior(exponential(2), class = "sds", dpar = "mugrn") +
+#         prior(normal(0, 1.5), class = "Intercept", dpar = "mulab") +
+#         prior(normal(0, 0.5), class = "b", dpar = "mulab") +
+#         prior(exponential(2), class = "sd", dpar = "mulab") +
+#         prior(exponential(2), class = "sds", dpar = "mulab") +
+#         prior(normal(0, 1.5), class = "Intercept", dpar = "mulib") +
+#         prior(normal(0, 0.5), class = "b", dpar = "mulib") +
+#         prior(exponential(2), class = "sd", dpar = "mulib") +
+#         prior(exponential(2), class = "sds", dpar = "mulib") +
+#         prior(normal(0, 1.5), class = "Intercept", dpar = "musnp") +
+#         prior(normal(0, 0.5), class = "b", dpar = "musnp") +
+#         prior(exponential(2), class = "sd", dpar = "musnp") +
+#         prior(exponential(2), class = "sds", dpar = "musnp") +
+#         prior(gamma(1, 0.01), class = "phi"),
+#       data = dta,
+#       seed = 666,
+#       iter = 2e3,
+#       chains = 4,
+#       cores = 4,
+#       refresh = 5,
+#       control =
+#         list(
+#           adapt_delta = .95,
+#           max_treedepth = 15
+#         ),
+#       file = here("_output", paste0("model", "-", Sys.Date()))
+#   )
 
 m1 <-
   brm(formula = bf(outcome ~ 1 + gb + s(time, k = 10) + (1 | pollster)),
@@ -156,10 +209,6 @@ m1 <-
         prior(normal(0, 0.5), class = "b", dpar = "mucon") +
         prior(exponential(2), class = "sd", dpar = "mucon") +
         prior(exponential(2), class = "sds", dpar = "mucon") +
-        prior(normal(0, 1.5), class = "Intercept", dpar = "mugrn") +
-        prior(normal(0, 0.5), class = "b", dpar = "mugrn") +
-        prior(exponential(2), class = "sd", dpar = "mugrn") +
-        prior(exponential(2), class = "sds", dpar = "mugrn") +
         prior(normal(0, 1.5), class = "Intercept", dpar = "mulab") +
         prior(normal(0, 0.5), class = "b", dpar = "mulab") +
         prior(exponential(2), class = "sd", dpar = "mulab") +
@@ -168,10 +217,6 @@ m1 <-
         prior(normal(0, 0.5), class = "b", dpar = "mulib") +
         prior(exponential(2), class = "sd", dpar = "mulib") +
         prior(exponential(2), class = "sds", dpar = "mulib") +
-        prior(normal(0, 1.5), class = "Intercept", dpar = "musnp") +
-        prior(normal(0, 0.5), class = "b", dpar = "musnp") +
-        prior(exponential(2), class = "sd", dpar = "musnp") +
-        prior(exponential(2), class = "sds", dpar = "musnp") +
         prior(gamma(1, 0.01), class = "phi"),
       data = dta,
       seed = 666,
@@ -227,20 +272,37 @@ pred_dta <-
 
 # Format data so that the party variable takes the full party names
 
+# pred_dta <-
+#   pred_dta %>%
+#   mutate(
+#     party =
+#       party %>%
+#       factor(
+#         levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+#         labels =
+#           c(
+#             "Conservative",
+#             "Labour",
+#             "Lib Dems",
+#             "SNP",
+#             "Green",
+#             "Other"
+#           )
+#       )
+#   )
+
 pred_dta <-
   pred_dta %>%
   mutate(
     party =
       party %>%
       factor(
-        levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+        levels = c("con", "lab", "lib", "oth"),
         labels =
           c(
             "Conservative",
             "Labour",
             "Lib Dems",
-            "SNP",
-            "Green",
             "Other"
           )
       )
@@ -259,8 +321,32 @@ pred_end <-
 
 # Convert raw data to long-format
 
+# point_dta <-
+#   dta[names(dta) %in% c("date", "con", "lab", "lib", "snp", "grn")] %>%
+#   pivot_longer(
+#     cols = -date,
+#     names_to = "party",
+#     values_to = "est"
+#   ) %>%
+#   mutate(
+#     party =
+#       party %>%
+#       factor(
+#         levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+#         labels =
+#           c(
+#             "Conservative",
+#             "Labour",
+#             "Lib Dems",
+#             "SNP",
+#             "Green",
+#             "Other"
+#           )
+#       )
+#   )
+
 point_dta <-
-  dta[names(dta) %in% c("date", "con", "lab", "lib", "snp", "grn")] %>%
+  dta[names(dta) %in% c("date", "con", "lab", "lib", "oth")] %>%
   pivot_longer(
     cols = -date,
     names_to = "party",
@@ -270,14 +356,12 @@ point_dta <-
     party =
       party %>%
       factor(
-        levels = c("con", "lab", "lib", "snp", "grn", "oth"),
+        levels = c("con", "lab", "lib", "oth"),
         labels =
           c(
             "Conservative",
             "Labour",
             "Lib Dems",
-            "SNP",
-            "Green",
             "Other"
           )
       )
@@ -285,6 +369,58 @@ point_dta <-
 
 
 # Plot
+
+# poll_plot <-
+#   ggplot() +
+#   geom_point(data =
+#                point_dta %>%
+#                filter(party != "Other"),
+#              aes(x = date,
+#                  y = est,
+#                  colour = party,
+#                  fill = party),
+#              alpha = .3,
+#              size = 1) +
+#   geom_ribbon(data =
+#                 pred_dta %>%
+#                 filter(party != "Other"),
+#               aes(x = date,
+#                   y = est,
+#                   ymin = lower,
+#                   ymax = upper,
+#                   colour = party,
+#                   fill = party),
+#               alpha = .3,
+#               colour = NA) +
+#   geom_line(data =
+#               pred_dta %>%
+#               filter(party != "Other"),
+#             aes(x = date,
+#                 y = est,
+#                 colour = party),
+#             size = 1) +
+#   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+#   scale_x_date(date_breaks = "1 month",
+#                date_labels = "%b") +
+#   coord_cartesian(xlim = c(min(dta$date), max(dta$date)),
+#                   ylim = c(0, .6)) +
+#   scale_fill_manual(values = c("#0087DC",
+#                                "#DC241f",
+#                                "#FAA61A",
+#                                "#E8DD67",
+#                                "#6AB023")) +
+#   scale_color_manual(values = c("#0087DC",
+#                                 "#DC241f",
+#                                 "#FAA61A",
+#                                 "#E8DD67",
+#                                 "#6AB023")) +
+#   labs(title = paste("UK Poll of Polls"),
+#        subtitle = format(Sys.Date(), "%d %b %Y"),
+#        caption = "",
+#        y = "",
+#        x = "") +
+#   theme_bailey() +
+#   theme(legend.position = "none")
 
 poll_plot <-
   ggplot() +
@@ -322,14 +458,10 @@ poll_plot <-
                   ylim = c(0, .6)) +
   scale_fill_manual(values = c("#0087DC",
                                "#DC241f",
-                               "#FAA61A",
-                               "#E8DD67",
-                               "#6AB023")) +
+                               "#FAA61A")) +
   scale_color_manual(values = c("#0087DC",
                                 "#DC241f",
-                                "#FAA61A",
-                                "#E8DD67",
-                                "#6AB023")) +
+                                "#FAA61A")) +
   labs(title = paste("UK Poll of Polls"),
        subtitle = format(Sys.Date(), "%d %b %Y"),
        caption = "",
@@ -343,6 +475,56 @@ poll_plot <-
 # 5. Plot predicted vote intention ----------------------------------------
 
 # Get predicted probabilities now and order by size
+
+# vi_pred <-
+#   add_fitted_draws(
+#     model = m1,
+#     newdata =
+#       tibble(time = today,
+#              gb = "GB"),
+#     re_formula = NA
+#   ) %>%
+#   group_by(.category) %>%
+#   summarise(
+#     est = median(.value),
+#     lower = quantile(.value, probs = .05),
+#     upper = quantile(.value, probs = .95),
+#     .groups = "drop"
+#   ) %>%
+#   ungroup() %>%
+#   rename(party = .category) %>%
+#   arrange(desc(est)) %>%
+#   mutate(
+#     party =
+#       party %>%
+#       factor(
+#         levels =
+#           c("con",
+#             "lab",
+#             "lib",
+#             "snp",
+#             "grn",
+#             "oth"),
+#         labels =
+#           c("Con",
+#             "Lab",
+#             "LD",
+#             "SNP",
+#             "Grn",
+#             "Oth")
+#       ),
+#     col =
+#       case_when(
+#         party == "Con" ~ "#0087DC",
+#         party == "Lab" ~ "#DC241f",
+#         party == "LD" ~ "#FAA61A",
+#         party == "SNP" ~ "#E8DD67",
+#         party == "Grn" ~ "#6AB023"
+#       )
+#   ) %>%
+#   mutate(
+#     label = scales::percent(est, accuracy = 1)
+#   )
 
 vi_pred <-
   add_fitted_draws(
@@ -370,24 +552,18 @@ vi_pred <-
           c("con",
             "lab",
             "lib",
-            "snp",
-            "grn",
             "oth"),
         labels =
           c("Con",
             "Lab",
             "LD",
-            "SNP",
-            "Grn",
             "Oth")
       ),
     col =
       case_when(
         party == "Con" ~ "#0087DC",
         party == "Lab" ~ "#DC241f",
-        party == "LD" ~ "#FAA61A",
-        party == "SNP" ~ "#E8DD67",
-        party == "Grn" ~ "#6AB023"
+        party == "LD" ~ "#FAA61A"
       )
   ) %>%
   mutate(
@@ -407,6 +583,36 @@ vi_pred <-
 
 
 # Plot
+
+# vi_plot <-
+#   vi_pred %>%
+#   filter(party != "Oth") %>%
+#   ggplot(aes(x = party,
+#              y = est,
+#              ymin = lower,
+#              ymax = upper,
+#              colour = party,
+#              label = label)) +
+#   geom_interval(size = 1,
+#                 alpha = .4) +
+#   geom_point(size = 2) +
+#   geom_text(color = "black",
+#             nudge_x = .3,
+#             family = "Cabin",
+#             size = 2.5) +
+#   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+#   scale_color_manual(values = vi_pred$col[vi_pred$party != "Oth"]) +
+#   coord_cartesian(ylim = c(0, .6)) +
+#   labs(title = paste("UK Poll of Polls"),
+#        subtitle = format(Sys.Date(), "%d %b %Y"),
+#        caption = "@PoliSciJack",
+#        y = "",
+#        x = "") +
+#   theme_bailey() +
+#   theme(
+#     legend.position = "none",
+#     plot.title = element_text(colour = "white"),
+#     plot.subtitle = element_text(colour = "white"))
 
 vi_plot <-
   vi_pred %>%
@@ -468,15 +674,24 @@ vi_pred <- vi_pred %>% filter(party != "Oth")
 # Save text summary to disk
 
 sink(here("_output", "tweet.txt"))
+# cat(
+#   paste("UK Poll of Polls,", format(Sys.Date(), "%d %b %Y")),
+#   paste0(
+#     "\n\n",
+#     vi_pred$party[1], ": ", vi_pred$label[1], " (", scales::percent(vi_pred$lower[1]), "-", scales::percent(vi_pred$upper[1]), ")\n",
+#     vi_pred$party[2], ": ", vi_pred$label[2], " (", scales::percent(vi_pred$lower[2]), "-", scales::percent(vi_pred$upper[2]), ")\n",
+#     vi_pred$party[3], ": ", vi_pred$label[3], " (", scales::percent(vi_pred$lower[3]), "-", scales::percent(vi_pred$upper[3]), ")\n",
+#     vi_pred$party[4], ": ", vi_pred$label[4], " (", scales::percent(vi_pred$lower[4]), "-", scales::percent(vi_pred$upper[4]), ")\n",
+#     vi_pred$party[5], ": ", vi_pred$label[5], " (", scales::percent(vi_pred$lower[5]), "-", scales::percent(vi_pred$upper[5]), ")"
+#   )
+# )
 cat(
   paste("UK Poll of Polls,", format(Sys.Date(), "%d %b %Y")),
   paste0(
     "\n\n",
     vi_pred$party[1], ": ", vi_pred$label[1], " (", scales::percent(vi_pred$lower[1]), "-", scales::percent(vi_pred$upper[1]), ")\n",
     vi_pred$party[2], ": ", vi_pred$label[2], " (", scales::percent(vi_pred$lower[2]), "-", scales::percent(vi_pred$upper[2]), ")\n",
-    vi_pred$party[3], ": ", vi_pred$label[3], " (", scales::percent(vi_pred$lower[3]), "-", scales::percent(vi_pred$upper[3]), ")\n",
-    vi_pred$party[4], ": ", vi_pred$label[4], " (", scales::percent(vi_pred$lower[4]), "-", scales::percent(vi_pred$upper[4]), ")\n",
-    vi_pred$party[5], ": ", vi_pred$label[5], " (", scales::percent(vi_pred$lower[5]), "-", scales::percent(vi_pred$upper[5]), ")"
+    vi_pred$party[3], ": ", vi_pred$label[3], " (", scales::percent(vi_pred$lower[3]), "-", scales::percent(vi_pred$upper[3]), ")\n"
   )
 )
 sink()
