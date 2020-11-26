@@ -629,7 +629,7 @@ vi_plot <-
   geom_text(color = "black",
             nudge_x = .3,
             family = "Cabin",
-            size = 2.5) +
+            size = 2.2) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   scale_color_manual(values = vi_pred$col[vi_pred$party != "Oth"]) +
   coord_cartesian(ylim = c(0, .6)) +
