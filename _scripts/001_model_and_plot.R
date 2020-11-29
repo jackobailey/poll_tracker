@@ -52,7 +52,7 @@ dta <-
     gb = Area,
     con = Con,
     lab = Lab,
-    lib = `Lib Dem`
+    lib = `Lib Dem`,
     # snp = SNP,
     # grn = Green
   ) %>%
@@ -506,20 +506,20 @@ poll_plot <-
 #             "grn",
 #             "oth"),
 #         labels =
-#           c("Con",
-#             "Lab",
-#             "LD",
+#           c("Conservative",
+#             "Labour",
+#             "Lib Dem",
 #             "SNP",
-#             "Grn",
-#             "Oth")
+#             "Green",
+#             "Other")
 #       ),
 #     col =
 #       case_when(
-#         party == "Con" ~ "#0087DC",
-#         party == "Lab" ~ "#DC241f",
-#         party == "LD" ~ "#FAA61A",
+#         party == "Conservative" ~ "#0087DC",
+#         party == "Labour" ~ "#DC241f",
+#         party == "Lib Dem" ~ "#FAA61A",
 #         party == "SNP" ~ "#E8DD67",
-#         party == "Grn" ~ "#6AB023"
+#         party == "Green" ~ "#6AB023"
 #       )
 #   ) %>%
 #   mutate(
@@ -586,7 +586,7 @@ vi_pred <-
 
 # vi_plot <-
 #   vi_pred %>%
-#   filter(party != "Oth") %>%
+#   filter(party != "Other") %>%
 #   ggplot(aes(x = party,
 #              y = est,
 #              ymin = lower,
@@ -599,9 +599,9 @@ vi_pred <-
 #   geom_text(color = "black",
 #             nudge_x = .3,
 #             family = "Cabin",
-#             size = 2.5) +
+#             size = 2.2) +
 #   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-#   scale_color_manual(values = vi_pred$col[vi_pred$party != "Oth"]) +
+#   scale_color_manual(values = vi_pred$col[vi_pred$party != "Other"]) +
 #   coord_cartesian(ylim = c(0, .6)) +
 #   labs(title = paste("UK Poll of Polls"),
 #        subtitle = format(Sys.Date(), "%d %b %Y"),
