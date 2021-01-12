@@ -36,9 +36,14 @@ url <- "https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_United_Kingdo
 
 
 # Now, we'll use the htmltab() function to scrape the contents of the second
-# table on the page which includes all of the polls since the last election.
+# and third tables on the page which includes all of the polls since the last
+# election (i.e. for 2020 and 2021).
 
-dta <- htmltab(doc = url, which = 2)
+dta <-
+  rbind(
+    htmltab(doc = url, which = 2),
+    htmltab(doc = url, which = 3)
+  )
 
 
 # Next, we'll select the variables that we need, rename them too, and save
