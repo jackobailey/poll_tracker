@@ -37,13 +37,18 @@ url <- "https://en.wikipedia.org/wiki/Opinion_polling_for_the_next_United_Kingdo
 
 # Now, we'll use the htmltab() function to scrape the contents of the second
 # and third tables on the page which includes all of the polls since the last
-# election (i.e. for 2020 and 2021).
+# election (i.e. for 2020 and 2021). We'll append the year to each date and
+# then rbind() them together.
 
-dta <-
-  rbind(
-    htmltab(doc = url, which = 2),
-    htmltab(doc = url, which = 3)
-  )
+dta_2021 <-
+  htmltab(doc = url, which = 2) %>%
+  mutate(Datesconducted = paste(Datesconducted, "2021"))
+
+dta_2020 <-
+  htmltab(doc = url, which = 3) %>%
+  mutate(Datesconducted = paste(Datesconducted, "2020"))
+
+dta <- rbind(dta_2021, dta_2020)
 
 
 # Next, we'll select the variables that we need, rename them too, and save
@@ -89,7 +94,6 @@ dta <-
     date =
       date %>%
       str_remove(".*(–|-)") %>%
-      paste(., "2020") %>%
       dmy()
   )
 
