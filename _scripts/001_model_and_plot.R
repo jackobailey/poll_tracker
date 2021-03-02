@@ -227,17 +227,16 @@ m1 <-
         prior(exponential(2), class = "sd", dpar = "mulib") +
         prior(exponential(2), class = "sds", dpar = "mulib") +
         prior(gamma(1, 0.01), class = "phi"),
+      backend = "cmdstanr",
       data = dta,
       seed = 666,
       iter = 2e3,
-      chains = 4,
-      cores = 4,
+      chains = 2,
+      cores = 2,
+      threads = threading(2),
       refresh = 5,
-      control =
-        list(
-          adapt_delta = .95,
-          max_treedepth = 15
-        ),
+      adapt_delta = .95,
+      max_treedepth = 15,
       file = here("_output", paste0("model", "-", Sys.Date()))
   )
 
